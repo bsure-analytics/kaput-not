@@ -1,0 +1,54 @@
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - gofmt
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gosimple
+    - ineffassign
+    - typecheck
+    - exportloopref
+    - gocyclo
+    - goimports
+    - misspell
+    - unparam
+    - unconvert
+    - goconst
+    - gosec
+    - bodyclose
+    - noctx
+    - rowserrcheck
+    - sqlclosecheck
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+  misspell:
+    locale: US
+  gosec:
+    excludes:
+      - G404 # Use of weak random number generator (we don't need cryptographic randomness for IDs)
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - gosec
+        - unparam
+    # Ignore long lines in generated code
+    - path: zz_generated.*\.go
+      linters:
+        - lll
+  max-issues-per-linter: 0
+  max-same-issues: 0

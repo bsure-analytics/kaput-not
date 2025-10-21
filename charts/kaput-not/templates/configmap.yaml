@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "kaput-not.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kaput-not.labels" . | nindent 4 }}
+data:
+  # Netmaker API endpoint (non-sensitive)
+  NETMAKER_API_URL: {{ .Values.netmaker.apiUrl | quote }}
+
+  # Leader election configuration
+  # Note: LEADER_ELECTION_ENABLED and LEADER_ELECTION_NAMESPACE are auto-detected
+  # when not explicitly set. In-cluster defaults to enabled with pod's namespace.
+  # Local development defaults to disabled.
+  LEADER_ELECTION_ENABLED: {{ .Values.leaderElection.enabled | quote }}
+  LEADER_ELECTION_ID: {{ .Values.leaderElection.id | quote }}

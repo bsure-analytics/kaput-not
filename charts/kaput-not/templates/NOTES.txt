@@ -1,0 +1,38 @@
+kaput-not has been deployed!
+
+{{ if eq .Values.netmaker.password "REPLACE-WITH-ACTUAL-PASSWORD" }}
+WARNING: You are using the default password placeholder!
+Please update your Netmaker credentials by upgrading the release with actual values:
+
+  helm upgrade {{ .Release.Name }} {{ .Chart.Name }} \
+    --namespace {{ .Release.Namespace }} \
+    --set netmaker.username="kaput-not" \
+    --set netmaker.password="YOUR-ACTUAL-PASSWORD"
+
+Or use a separate values file (recommended):
+
+  helm upgrade {{ .Release.Name }} {{ .Chart.Name }} \
+    --namespace {{ .Release.Namespace }} \
+    -f my-secret-values.yaml
+
+{{ end }}
+Configuration:
+  Netmaker API URL: {{ .Values.netmaker.apiUrl }}
+  Networks: Auto-discovered from Netmaker API
+  Replicas: {{ .Values.replicaCount }}
+  Leader Election: {{ .Values.leaderElection.enabled }}
+
+To check the status of the deployment:
+
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "kaput-not.name" . }}
+
+To view the logs:
+
+  kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "kaput-not.name" . }} --tail=50
+
+To check which pod is the leader:
+
+  kubectl get lease -n {{ .Release.Namespace }} {{ .Values.leaderElection.id }} -o yaml
+
+For more information, visit:
+  https://github.com/bsure-analytics/kaput-not

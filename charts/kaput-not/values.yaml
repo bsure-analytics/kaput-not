@@ -1,0 +1,94 @@
+# Default values for kaput-not
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Number of controller replicas (leader election enabled)
+replicaCount: 2
+
+image:
+  repository: ghcr.io/bsure-analytics/kaput-not
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# Netmaker configuration
+netmaker:
+  # Netmaker API endpoint (required)
+  apiUrl: https://api.netmaker.example.com
+  # Networks are auto-discovered from Netmaker API based on which networks each host participates in
+  # Netmaker credentials (required)
+  # You should override these values via --set flags or a separate values file
+  # NEVER commit actual credentials to git
+  username: kaput-not
+  password: REPLACE-WITH-ACTUAL-PASSWORD
+
+# Leader election configuration
+leaderElection:
+  # Note: enabled defaults to true in-cluster, false for local development
+  # Namespace is auto-detected from the pod's service account
+  enabled: true
+  id: kaput-not
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 64Mi
+
+# Rolling update strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+
+# Topology spread constraints for HA
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Labels to add to all resources
+labels: {}
+
+# Annotations to add to all resources
+annotations: {}
