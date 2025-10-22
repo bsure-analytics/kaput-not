@@ -13,7 +13,7 @@ linters:
     - gosimple
     - ineffassign
     - typecheck
-    - exportloopref
+    - copyloopvar  # Replacement for deprecated exportloopref
     - gocyclo
     - goimports
     - misspell
