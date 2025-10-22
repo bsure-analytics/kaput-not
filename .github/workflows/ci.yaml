@@ -32,14 +32,14 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
       - name: Run tests
         run: make test
 
       - name: Run linters
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          install-mode: goinstall
+        run: make lint
 
       - name: Build binary
         run: make build
