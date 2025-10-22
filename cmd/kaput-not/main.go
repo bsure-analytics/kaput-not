@@ -151,7 +151,7 @@ func runWithLeaderElection(ctx context.Context, kubeClient kubernetes.Interface,
 		},
 	}
 
-	// Run leader election (blocks until context is cancelled)
+	// Run leader election (blocks until context is canceled)
 	if err := leaderelection.Run(ctx, leConfig); err != nil {
 		log.Fatalf("Leader election failed: %v", err)
 	}

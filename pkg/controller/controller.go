@@ -18,7 +18,7 @@ type Controller struct {
 	options *Options
 
 	nodeInformer cache.SharedIndexInformer
-	workqueue    workqueue.RateLimitingInterface
+	workqueue    workqueue.TypedRateLimitingInterface[string]
 }
 
 // New creates a new controller
@@ -37,7 +37,7 @@ func New(opts *Options) (*Controller, error) {
 	)
 
 	// Create workqueue with rate limiting
-	workqueue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+	workqueue := workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]())
 
 	c := &Controller{
 		options:      opts,
@@ -46,16 +46,18 @@ func New(opts *Options) (*Controller, error) {
 	}
 
 	// Register event handlers
-	c.nodeInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	if _, err := c.nodeInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    c.handleNodeAdd,
 		UpdateFunc: c.handleNodeUpdate,
 		DeleteFunc: c.handleNodeDelete,
-	})
+	}); err != nil {
+		return nil, fmt.Errorf("failed to add event handler: %w", err)
+	}
 
 	return c, nil
 }
 
-// Run starts the controller and blocks until the context is cancelled
+// Run starts the controller and blocks until the context is canceled
 func (c *Controller) Run(ctx context.Context) error {
 	defer runtime.HandleCrash()
 	defer c.workqueue.ShutDown()
@@ -85,20 +87,12 @@ func (c *Controller) runWorker(ctx context.Context) {
 
 // processNextWorkItem processes a single item from the workqueue
 func (c *Controller) processNextWorkItem(ctx context.Context) bool {
-	obj, shutdown := c.workqueue.Get()
+	key, shutdown := c.workqueue.Get()
 	if shutdown {
 		return false
 	}
 
-	defer c.workqueue.Done(obj)
-
-	var key string
-	var ok bool
-	if key, ok = obj.(string); !ok {
-		c.workqueue.Forget(obj)
-		runtime.HandleError(fmt.Errorf("expected string in workqueue but got %#v", obj))
-		return true
-	}
+	defer c.workqueue.Done(key)
 
 	if err := c.syncHandler(ctx, key); err != nil {
 		c.workqueue.AddRateLimited(key)
@@ -106,7 +100,7 @@ func (c *Controller) processNextWorkItem(ctx context.Context) bool {
 		return true
 	}
 
-	c.workqueue.Forget(obj)
+	c.workqueue.Forget(key)
 	return true
 }
 

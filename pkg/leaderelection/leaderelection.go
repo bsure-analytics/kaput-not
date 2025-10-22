@@ -97,7 +97,7 @@ func (c *Config) ApplyDefaults() {
 	}
 }
 
-// Run starts the leader election and blocks until the context is cancelled
+// Run starts the leader election and blocks until the context is canceled
 // Only the leader will execute OnStartedLeading callback
 func Run(ctx context.Context, config *Config) error {
 	// Validate and apply defaults
@@ -135,7 +135,7 @@ func Run(ctx context.Context, config *Config) error {
 		return fmt.Errorf("failed to create leader elector: %w", err)
 	}
 
-	// Run the leader election (blocks until context is cancelled)
+	// Run the leader election (blocks until context is canceled)
 	elector.Run(ctx)
 
 	return nil

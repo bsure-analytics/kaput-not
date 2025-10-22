@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
 )
 
 const (
@@ -128,19 +127,4 @@ func parseBool(value string, defaultValue bool) bool {
 		// Invalid value - return default
 		return defaultValue
 	}
-}
-
-// getEnvInt returns the environment variable as an integer or a default if not set
-func getEnvInt(key string, defaultValue int) int {
-	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
-	}
-
-	intValue, err := strconv.Atoi(value)
-	if err != nil {
-		return defaultValue
-	}
-
-	return intValue
 }

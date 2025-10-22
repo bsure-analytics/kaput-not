@@ -132,7 +132,7 @@ func (r *Reconciler) reconcilePodCIDR(
 	network string,
 ) error {
 	// Build index-based description: "Managed by kaput-not (DO NOT EDIT): index=<i>"
-	description := buildEgressDescription(nodeID, index)
+	description := buildEgressDescription(index)
 
 	// Build human-friendly name: "node-name pods (1/2)"
 	name := buildEgressName(nodeName, index, totalCIDRs)
@@ -286,7 +286,7 @@ func (r *Reconciler) deleteNodeFromNetwork(ctx context.Context, nodeID string, n
 // buildEgressDescription builds the index-based description
 // Format: "Managed by kaput-not (DO NOT EDIT): index=<i>"
 // Note: node_id is NOT included because it's already in the nodes map
-func buildEgressDescription(nodeID string, index int) string {
+func buildEgressDescription(index int) string {
 	return fmt.Sprintf("%s: index=%d", EgressMarker, index)
 }
 
