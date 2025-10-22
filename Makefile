@@ -1,11 +1,11 @@
 # Makefile for kaput-not Kubernetes controller
 
 # Variables
-BINARY_NAME=kaput-not
-DOCKER_IMAGE?=ghcr.io/bsure-analytics/kaput-not
-VERSION?=latest
-GOOS?=$(shell go env GOOS)
-GOARCH?=$(shell go env GOARCH)
+BINARY_NAME = kaput-not
+DOCKER_IMAGE ?= ghcr.io/bsure-analytics/kaput-not
+VERSION ?= $(shell git branch --show-current)
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
 
 # Build targets
 .PHONY: all
