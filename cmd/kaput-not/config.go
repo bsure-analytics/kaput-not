@@ -19,7 +19,8 @@ type Config struct {
 	// Networks are auto-discovered by looking up Netmaker host nodes
 
 	// Kubernetes configuration
-	Kubeconfig string // Optional - empty means in-cluster
+	Kubeconfig  string // Optional - empty means in-cluster
+	ClusterName string // Optional - for multi-cluster deployments sharing a Netmaker network
 
 	// Leader election configuration
 	LeaderElectionEnabled   bool
@@ -42,7 +43,8 @@ func LoadConfig() (*Config, error) {
 		// Networks are auto-discovered by querying Netmaker
 
 		// Kubernetes configuration (optional)
-		Kubeconfig: os.Getenv("KUBECONFIG"),
+		Kubeconfig:  os.Getenv("KUBECONFIG"),
+		ClusterName: os.Getenv("K8S_CLUSTER_NAME"), // Optional - for multi-cluster deployments
 
 		// Leader election configuration (auto-detected with overrides)
 		LeaderElectionEnabled:   detectLeaderElection(inCluster),

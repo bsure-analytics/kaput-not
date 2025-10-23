@@ -35,6 +35,12 @@ netmaker:
   username: kaput-not
   password: REPLACE-WITH-ACTUAL-PASSWORD
 
+# Kubernetes cluster name (optional)
+# Use this for multi-cluster deployments sharing a Netmaker network
+# If empty: single-cluster mode, manages all kaput-not egress rules
+# If set: multi-cluster mode, only manages egress rules with this cluster name
+clusterName: ""
+
 # Leader election configuration
 leaderElection:
   # Note: enabled defaults to true in-cluster, false for local development

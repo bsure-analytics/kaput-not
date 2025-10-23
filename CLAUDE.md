@@ -25,10 +25,13 @@ The project follows a clean separation between business logic and infrastructure
 ### Key Design Patterns
 
 **Index-Based Egress Rule Management:**
-- Egress rules use `description` field: `"Managed by kaput-not (DO NOT EDIT): index=0"`
+- Egress rules use `description` field with space-separated key=value pairs
+- Single-cluster format: `"Managed by kaput-not (DO NOT EDIT): index=0"`
+- Multi-cluster format: `"Managed by kaput-not (DO NOT EDIT): cluster=us-east index=0"`
 - Node ID is stored in the `nodes` map, not in description (avoid redundancy)
-- Lookup requires matching BOTH description index AND node ID in nodes map
+- Lookup requires matching BOTH description index AND node ID in nodes map AND cluster name (if configured)
 - This allows pod CIDRs to change over time without orphaning egress rules
+- Cluster name scoping prevents cross-cluster egress rule conflicts when multiple K8s clusters share a Netmaker network
 
 **Netmaker Node ID Mapping:**
 - Two-step lookup: K8s node name → Netmaker host → Netmaker node UUID
@@ -130,6 +133,14 @@ helm install kaput-not ./charts/kaput-not \
   --set netmaker.username="kaput-not" \
   --set netmaker.password="secret"
 
+# Multi-cluster deployment (set unique cluster name)
+helm install kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
+  --namespace kube-system \
+  --set netmaker.apiUrl="https://api.netmaker.example.com" \
+  --set netmaker.username="kaput-not" \
+  --set netmaker.password="secret" \
+  --set clusterName="us-east"
+
 # Deploy using Makefile (uses local chart)
 make deploy  # Alias for helm-upgrade
 
@@ -218,15 +229,20 @@ func (c *HTTPClient) NewMethod(ctx context.Context) error {
 
 The reconciler (`pkg/reconciler/reconciler.go`) handles the core business logic:
 
-- `ReconcileNode()` - Syncs all pod CIDRs for a node to Netmaker
-- `reconcilePodCIDR()` - Handles individual CIDR (find existing by index + node ID, create or update)
-- `DeleteNode()` - Removes all egress rules for a deleted node
+- `ReconcileNode()` - Syncs all pod CIDRs for a node to Netmaker across all networks
+- `reconcilePodCIDR()` - Handles individual CIDR (find existing by index + node ID + cluster, create or update)
+- `DeleteNode()` - Removes all egress rules for a deleted node (cluster-scoped)
+- `CleanupOrphanedEgresses()` - Periodic cleanup of orphaned egress rules (cluster-scoped)
+- `parseEgressDescription()` - Parses description to extract cluster and index metadata
+- `belongsToOurCluster()` - Filters egress rules by cluster name
+- `buildEgressDescription()` - Builds description with optional cluster name
 
 When modifying reconciliation:
 - Always check if egress already exists before creating
-- Use composite lookup: description index AND node ID in nodes map
+- Use composite lookup: description index AND node ID in nodes map AND cluster name (if configured)
 - Update existing egress if only the CIDR value changed
 - Use `EgressMetric = 500` as the metric value for nodes map
+- Always use helper functions for cluster filtering to maintain consistency
 
 ### Controller Event Handlers
 
@@ -254,7 +270,8 @@ All configuration is via environment variables (twelve-factor app):
   - Allows a Kubernetes node to be managed across multiple Netmaker networks simultaneously
   - Each network gets independent egress rules managed with the same index-based approach
 
-**Optional (with auto-detection):**
+**Optional:**
+- `K8S_CLUSTER_NAME` - Cluster identifier for multi-cluster deployments (empty = single-cluster mode, set = multi-cluster mode)
 - `KUBECONFIG` - Path to kubeconfig (empty = in-cluster mode)
 - `LEADER_ELECTION_ENABLED` - Enable leader election (auto-detected: disabled for local, enabled in-cluster)
 - `LEADER_ELECTION_NAMESPACE` - Namespace for lease (auto-detected: pod's namespace in-cluster, "kube-system" for local)
@@ -289,10 +306,21 @@ All configuration is via environment variables (twelve-factor app):
 - Distroless base image (~20MB)
 
 **Configuration:**
-- All settings via Helm values (netmaker.apiUrl, netmaker.username, netmaker.password)
+- All settings via Helm values (netmaker.apiUrl, netmaker.username, netmaker.password, clusterName)
 - Secrets managed via Helm (can override with --set or values file)
 - Never commit credentials to git
 - Networks auto-discovered from Netmaker API (no manual configuration)
+- Optional cluster name for multi-cluster deployments sharing a Netmaker network
+
+**Multi-Cluster Support:**
+- When multiple K8s clusters share a Netmaker network, set `clusterName` to prevent cross-cluster egress conflicts
+- Single-cluster mode (default): `clusterName=""` - manages all kaput-not egress rules without cluster name
+- Multi-cluster mode: `clusterName="us-east"` - only manages egress rules with matching cluster name
+- Egress description format changes based on mode:
+  - Single-cluster: `"Managed by kaput-not (DO NOT EDIT): index=0"`
+  - Multi-cluster: `"Managed by kaput-not (DO NOT EDIT): cluster=us-east index=0"`
+- Migration safety: existing egress rules without cluster name are left untouched when switching to multi-cluster mode
+- Helper functions in reconciler: `parseEgressDescription()`, `belongsToOurCluster()`, `buildEgressDescription()`
 
 ## Memory Complexity and Scaling
 

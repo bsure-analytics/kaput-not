@@ -24,6 +24,7 @@ kaput-not is a Kubernetes controller that automatically synchronizes pod CIDR al
 ### Key Features
 
 - ✅ **CNI-Agnostic**: Works with any CNI using standard Kubernetes API
+- ✅ **Multi-Cluster Safe**: Optional cluster name scoping prevents cross-cluster egress rule conflicts
 - ✅ **Leader Election**: High availability with multiple replicas
 - ✅ **Rebuild Resilient**: Uses index-based lookup for stable egress rule management
 - ✅ **Multi-CIDR Support**: Handles multiple pod CIDRs per node (IPv4/IPv6 dual-stack)
@@ -41,13 +42,24 @@ kaput-not is a Kubernetes controller that automatically synchronizes pod CIDR al
 ### Egress Rule Format
 
 Each pod CIDR gets its own egress rule with:
-- **Description**: `Managed by kaput-not (DO NOT EDIT): index=0` (stable identifier)
+- **Description**: `Managed by kaput-not (DO NOT EDIT): index=0` (stable identifier, or `cluster=us-east index=0` for multi-cluster)
 - **Name**: `node-name pods (1/2)` (human-friendly)
 - **Range**: Pod CIDR value (e.g., `10.160.0.0/24`)
 - **NAT**: `false` (no source NAT for pod CIDRs)
 - **Nodes**: Map containing the Netmaker node UUID (e.g., `{"uuid": 500}`)
 
 The index-based description combined with the node ID in the nodes map ensures that egress rules survive pod CIDR changes while preventing orphaned rules.
+
+### Multi-Cluster Support
+
+When multiple Kubernetes clusters share a single Netmaker network, use cluster name scoping to prevent conflicts:
+
+- **Single-cluster mode** (default): Leave `clusterName` empty - manages all kaput-not egress rules
+- **Multi-cluster mode**: Set `clusterName` to a unique identifier (e.g., `us-east`) - only manages egress rules with that cluster name
+
+Egress rules include the cluster name in the description: `Managed by kaput-not (DO NOT EDIT): cluster=us-east index=0`
+
+**Migration safety**: When transitioning from single-cluster to multi-cluster mode, existing egress rules without cluster names are left untouched and new egress rules with cluster names are created.
 
 ## Installation
 
@@ -133,6 +145,20 @@ helm install kaput-not ./charts/kaput-not \
   --set netmaker.password="your-password-here"
 ```
 
+#### Multi-Cluster Deployment
+
+If multiple Kubernetes clusters share a Netmaker network, set a unique cluster name:
+
+```bash
+helm install kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
+  --namespace kube-system \
+  --create-namespace \
+  --set netmaker.apiUrl="https://api.netmaker.example.com" \
+  --set netmaker.username="kaput-not" \
+  --set netmaker.password="your-password-here" \
+  --set clusterName="us-east"  # Unique identifier for this cluster
+```
+
 **Recommended: Use a separate values file for credentials** (never commit to git):
 
 ```bash
@@ -184,6 +210,7 @@ Configuration is managed via Helm values. See `charts/kaput-not/values.yaml` for
 
 ### Common Optional Values
 
+- `clusterName`: Unique cluster identifier for multi-cluster deployments (default: `""` for single-cluster mode)
 - `replicaCount`: Number of controller replicas (default: `2`)
 - `image.repository`: Docker image repository (default: `ghcr.io/bsure-analytics/kaput-not`)
 - `image.tag`: Docker image tag (default: chart appVersion)
@@ -220,7 +247,8 @@ For local development without Helm:
 
 **Networks are auto-discovered** from the Netmaker API based on which networks each Kubernetes host participates in.
 
-**Optional (auto-detected):**
+**Optional:**
+- `K8S_CLUSTER_NAME`: Cluster identifier for multi-cluster deployments (empty = single-cluster mode)
 - `LEADER_ELECTION_ENABLED`: Enable leader election (auto-detected: disabled for local dev, enabled in-cluster)
 - `LEADER_ELECTION_NAMESPACE`: Namespace for lease resource (auto-detected: pod's namespace in-cluster, `kube-system` for local dev)
 - `LEADER_ELECTION_ID`: Lease resource name (default: `kaput-not`)

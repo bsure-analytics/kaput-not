@@ -21,6 +21,9 @@ type Options struct {
 	// Reconciler is the reconciliation logic
 	Reconciler *reconciler.Reconciler
 
+	// ClusterName is the name of this Kubernetes cluster (optional, for multi-cluster deployments)
+	ClusterName string
+
 	// ResyncPeriod is how often to resync all nodes
 	// Default: 10 minutes
 	ResyncPeriod time.Duration

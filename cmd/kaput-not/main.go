@@ -61,14 +61,19 @@ func main() {
 	log.Println("Successfully authenticated with Netmaker")
 
 	// Create reconciler with single client (networks auto-discovered)
-	rec := reconciler.New(cachedClient)
-	log.Println("Reconciler created successfully")
+	rec := reconciler.New(cachedClient, cfg.ClusterName)
+	if cfg.ClusterName != "" {
+		log.Printf("Reconciler created successfully (cluster=%s)", cfg.ClusterName)
+	} else {
+		log.Println("Reconciler created successfully (single-cluster mode)")
+	}
 
 	// Create controller
 	ctrl, err := controller.New(&controller.Options{
 		KubeClient:     kubeClient,
 		NetmakerClient: cachedClient,
 		Reconciler:     rec,
+		ClusterName:    cfg.ClusterName,
 	})
 	if err != nil {
 		log.Fatalf("Failed to create controller: %v", err)

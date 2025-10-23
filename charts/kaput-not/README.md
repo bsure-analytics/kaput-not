@@ -24,6 +24,18 @@ helm install kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
   --set netmaker.password="your-password-here"
 ```
 
+For multi-cluster deployments (multiple K8s clusters sharing a Netmaker network):
+
+```bash
+helm install kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
+  --namespace kube-system \
+  --create-namespace \
+  --set netmaker.apiUrl="https://api.netmaker.example.com" \
+  --set netmaker.username="kaput-not" \
+  --set netmaker.password="your-password-here" \
+  --set clusterName="us-east"
+```
+
 To install a specific version:
 
 ```bash
@@ -95,6 +107,7 @@ See `values.yaml` for all available configuration options.
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
+| `clusterName` | Cluster identifier for multi-cluster deployments | `""` (single-cluster mode) |
 | `replicaCount` | Number of controller replicas | `2` |
 | `image.repository` | Docker image repository | `ghcr.io/bsure-analytics/kaput-not` |
 | `image.tag` | Docker image tag | Chart appVersion |
@@ -105,6 +118,7 @@ See `values.yaml` for all available configuration options.
 | `resources.requests.memory` | Memory request | `64Mi` |
 | `resources.limits.cpu` | CPU limit | `200m` |
 | `resources.limits.memory` | Memory limit | `128Mi` |
+| `priorityClassName` | Priority class for pod scheduling | `system-cluster-critical` |
 
 **Note:** The leader election namespace is auto-detected from the pod's service account and does not need to be configured.
 
@@ -160,11 +174,51 @@ kaput-not includes intelligent caching to reduce API calls to Netmaker:
 - Automatic invalidation on TTL expiry and authentication failures
 - Thread-safe for concurrent access
 
+### Multi-Cluster Support
+
+When multiple Kubernetes clusters share a single Netmaker network, use cluster name scoping to prevent conflicts:
+
+**Single-cluster mode (default):**
+```yaml
+clusterName: ""  # Manages all kaput-not egress rules
+```
+
+**Multi-cluster mode:**
+```yaml
+clusterName: "us-east"  # Only manages egress rules with this cluster name
+```
+
+**How it works:**
+- Egress rules include the cluster name in the description
+- Single-cluster: `"Managed by kaput-not (DO NOT EDIT): index=0"`
+- Multi-cluster: `"Managed by kaput-not (DO NOT EDIT): cluster=us-east index=0"`
+- Each cluster manages only its own egress rules
+- Migration safety: existing rules without cluster names are preserved
+
+**Example multi-cluster deployment:**
+```yaml
+# values-us-east.yaml
+netmaker:
+  apiUrl: "https://api.netmaker.example.com"
+  username: "kaput-not"
+  password: "secure-password"
+clusterName: "us-east"
+```
+
+```yaml
+# values-eu-west.yaml
+netmaker:
+  apiUrl: "https://api.netmaker.example.com"
+  username: "kaput-not"
+  password: "secure-password"
+clusterName: "eu-west"
+```
+
 ### Multi-Network Support
 
 kaput-not can manage a Kubernetes node across multiple Netmaker networks:
 
-- Specify multiple networks: `netmaker.networks: "network1,network2"` or `netmaker.networks: "network1 network2"`
+- Networks are auto-discovered from the Netmaker API
 - Each network gets independent egress rules
 - Useful for complex network topologies
 - Cache is network-aware to prevent cross-network data leakage

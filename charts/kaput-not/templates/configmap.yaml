@@ -9,6 +9,13 @@ data:
   # Netmaker API endpoint (non-sensitive)
   NETMAKER_API_URL: {{ .Values.netmaker.apiUrl | quote }}
 
+  # Kubernetes cluster name (optional, for multi-cluster deployments)
+  # If empty: single-cluster mode, manages all kaput-not egress rules
+  # If set: multi-cluster mode, only manages egress rules with this cluster name
+  {{- if .Values.clusterName }}
+  K8S_CLUSTER_NAME: {{ .Values.clusterName | quote }}
+  {{- end }}
+
   # Leader election configuration
   # Note: LEADER_ELECTION_ENABLED and LEADER_ELECTION_NAMESPACE are auto-detected
   # when not explicitly set. In-cluster defaults to enabled with pod's namespace.
