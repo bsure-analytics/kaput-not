@@ -92,3 +92,5 @@ labels: {}
 
 # Annotations to add to all resources
 annotations: {}
+
+priorityClassName: system-cluster-critical
