@@ -125,7 +125,7 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           sed -i "s/^version:.*/version: $VERSION/" charts/kaput-not/Chart.yaml
-          sed -i "s/^appVersion:.*/appVersion: \"$VERSION\"/" charts/kaput-not/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: v$VERSION/" charts/kaput-not/Chart.yaml
           echo "Updated Chart.yaml to version $VERSION"
 
       - name: Lint Helm chart
@@ -136,12 +136,12 @@ jobs:
           helm package charts/kaput-not -d dist/
 
       - name: Log in to Container Registry
-        if: github.event_name != 'pull_request'
+        if: steps.version.outputs.is_release == 'true'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} --username ${{ github.actor }} --password-stdin
 
       - name: Push Helm chart to GHCR
-        if: github.event_name != 'pull_request'
+        if: steps.version.outputs.is_release == 'true'
         run: |
           CHART_VERSION="${{ steps.version.outputs.version }}"
           helm push dist/kaput-not-${CHART_VERSION}.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}
