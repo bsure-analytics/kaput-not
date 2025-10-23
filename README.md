@@ -114,7 +114,7 @@ The service account must have permissions to:
 #### Option 1: Install from GHCR (Recommended)
 
 ```bash
-helm install kaput-not oci://ghcr.io/bsure-analytics/kaput-not \
+helm install kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
   --namespace kube-system \
   --create-namespace \
   --set netmaker.apiUrl="https://api.netmaker.example.com" \
@@ -145,7 +145,7 @@ netmaker:
 EOF
 
 # Install from GHCR using the values file
-helm install kaput-not oci://ghcr.io/bsure-analytics/kaput-not \
+helm install kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
   --namespace kube-system \
   --create-namespace \
   -f my-values.yaml
@@ -194,7 +194,7 @@ Configuration is managed via Helm values. See `charts/kaput-not/values.yaml` for
 
 ```bash
 # Using GHCR
-helm upgrade kaput-not oci://ghcr.io/bsure-analytics/kaput-not \
+helm upgrade kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
   --namespace kube-system \
   --set replicaCount=3 \
   --set resources.requests.memory="128Mi" \
@@ -413,7 +413,7 @@ export KUBECONFIG="$HOME/.kube/config"
 4. If password changed, upgrade Helm release with new password:
    ```bash
    # Using GHCR
-   helm upgrade kaput-not oci://ghcr.io/bsure-analytics/kaput-not \
+   helm upgrade kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
      --namespace kube-system \
      --reuse-values \
      --set netmaker.password="<new-password>"
@@ -499,10 +499,10 @@ kaput-not releases are automatically published to GitHub Container Registry (GHC
   - View at: https://github.com/bsure-analytics/kaput-not/pkgs/container/kaput-not
   - Tags: latest, version numbers (1.0.0, 1.0, 1), branch names, git SHA
 
-- **Helm Charts**: `oci://ghcr.io/bsure-analytics/kaput-not`
+- **Helm Charts**: `oci://ghcr.io/bsure-analytics/charts/kaput-not`
   - Published as OCI artifacts (Helm 3.8+ required)
   - Version numbers match git tags (v1.0.0 → chart version 1.0.0)
-  - Install: `helm install kaput-not oci://ghcr.io/bsure-analytics/kaput-not`
+  - Install: `helm install kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not`
 
 ## Related Projects
 

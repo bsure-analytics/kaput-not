@@ -16,7 +16,7 @@ This Helm chart deploys kaput-not, a CNI-agnostic Kubernetes controller for mana
 #### From GHCR (GitHub Container Registry)
 
 ```bash
-helm install kaput-not oci://ghcr.io/bsure-analytics/kaput-not \
+helm install kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
   --namespace kube-system \
   --create-namespace \
   --set netmaker.apiUrl="https://api.netmaker.example.com" \
@@ -27,7 +27,7 @@ helm install kaput-not oci://ghcr.io/bsure-analytics/kaput-not \
 To install a specific version:
 
 ```bash
-helm install kaput-not oci://ghcr.io/bsure-analytics/kaput-not --version 0.1.0 \
+helm install kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not --version 0.1.2 \
   --namespace kube-system \
   --create-namespace \
   --set netmaker.apiUrl="https://api.netmaker.example.com" \
@@ -139,7 +139,7 @@ resources:
 Then install or upgrade:
 
 ```bash
-helm upgrade kaput-not oci://ghcr.io/bsure-analytics/kaput-not \
+helm upgrade kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
   --namespace kube-system \
   -f values-large-cluster.yaml
 ```
@@ -174,7 +174,7 @@ kaput-not can manage a Kubernetes node across multiple Netmaker networks:
 ### From GHCR
 
 ```bash
-helm upgrade kaput-not oci://ghcr.io/bsure-analytics/kaput-not \
+helm upgrade kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
   --namespace kube-system \
   -f my-values.yaml
 ```
@@ -182,7 +182,7 @@ helm upgrade kaput-not oci://ghcr.io/bsure-analytics/kaput-not \
 To upgrade to a specific version:
 
 ```bash
-helm upgrade kaput-not oci://ghcr.io/bsure-analytics/kaput-not --version 0.2.0 \
+helm upgrade kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not --version 0.2.0 \
   --namespace kube-system \
   -f my-values.yaml
 ```
@@ -200,7 +200,7 @@ helm upgrade kaput-not ./charts/kaput-not \
 To update only specific values while keeping others:
 
 ```bash
-helm upgrade kaput-not oci://ghcr.io/bsure-analytics/kaput-not \
+helm upgrade kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
   --namespace kube-system \
   --reuse-values \
   --set image.tag="v0.2.0"

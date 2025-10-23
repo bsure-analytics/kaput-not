@@ -144,4 +144,4 @@ jobs:
         if: steps.version.outputs.is_release == 'true'
         run: |
           CHART_VERSION="${{ steps.version.outputs.version }}"
-          helm push dist/kaput-not-${CHART_VERSION}.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}
+          helm push dist/kaput-not-${CHART_VERSION}.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts

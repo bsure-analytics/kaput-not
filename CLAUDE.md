@@ -117,7 +117,7 @@ DOCKER_IMAGE=myrepo/kaput-not VERSION=v1.0.0 make docker-build
 
 ```bash
 # Install from GHCR (recommended)
-helm install kaput-not oci://ghcr.io/bsure-analytics/kaput-not \
+helm install kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
   --namespace kube-system \
   --set netmaker.apiUrl="https://api.netmaker.example.com" \
   --set netmaker.username="kaput-not" \
@@ -389,8 +389,8 @@ GitHub Actions workflow (`.github/workflows/ci.yaml`):
 **Helm Charts** are published to GHCR OCI registry:
 - Chart version matches git tag (v1.2.3 → chart version 1.2.3)
 - Published on all push events (not PRs)
-- Available at: `oci://ghcr.io/bsure-analytics/kaput-not`
-- Install with: `helm install kaput-not oci://ghcr.io/bsure-analytics/kaput-not`
+- Available at: `oci://ghcr.io/bsure-analytics/charts/kaput-not`
+- Install with: `helm install kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not`
 
 ## Troubleshooting Development Issues
 
