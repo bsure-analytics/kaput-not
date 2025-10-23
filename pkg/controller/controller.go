@@ -70,10 +70,18 @@ func (c *Controller) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to wait for cache sync")
 	}
 
+	// Perform initial cleanup of orphaned egress rules
+	if err := c.cleanupOrphanedEgresses(ctx); err != nil {
+		runtime.HandleError(fmt.Errorf("initial cleanup failed: %w", err))
+	}
+
 	// Start workers
 	for i := 0; i < c.options.WorkerCount; i++ {
 		go wait.UntilWithContext(ctx, c.runWorker, time.Second)
 	}
+
+	// Start periodic cleanup goroutine (runs every ResyncPeriod)
+	go wait.UntilWithContext(ctx, c.periodicCleanup, c.options.ResyncPeriod)
 
 	<-ctx.Done()
 	return nil
@@ -220,4 +228,72 @@ func podCIDRsChanged(oldNode, newNode *corev1.Node) bool {
 	}
 
 	return false
+}
+
+// cleanupOrphanedEgresses builds a map of valid Netmaker node IDs from K8s nodes
+// and calls the reconciler to clean up orphaned egress rules
+//
+// Race safety: This method reads from the informer cache (thread-safe) and calls
+// Netmaker API methods. The Netmaker client operations are safe because:
+// - ListNodes/ListEgress use caching with TTL (reads are eventually consistent)
+// - DeleteEgress is idempotent (returns success even if already deleted)
+// - The reconciler checks existence before creating/updating
+//
+// The worst-case race is deleting an egress rule that's being created concurrently,
+// which will be recreated on the next reconciliation cycle (self-healing).
+//
+// Time complexity: O(n + m) where n = K8s nodes, m = Netmaker hosts
+// Memory complexity: O(m) for hostname map + O(total node IDs) for validNodeIDs
+func (c *Controller) cleanupOrphanedEgresses(ctx context.Context) error {
+	// Build set of valid Netmaker node IDs from all K8s nodes
+	validNodeIDs := make(map[string]bool)
+
+	// List all Netmaker hosts once and build hostname->nodeIDs map for O(1) lookups
+	// This is O(n + m) instead of O(n × m) if we called GetNodeIDsByHostname per node
+	hosts, err := c.options.NetmakerClient.ListHosts(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to list Netmaker hosts: %w", err)
+	}
+
+	hostnameToNodeIDs := make(map[string][]string, len(hosts))
+	for _, host := range hosts {
+		hostnameToNodeIDs[host.Name] = host.Nodes
+	}
+
+	// List all K8s nodes from informer cache (thread-safe read)
+	nodeList := c.nodeInformer.GetIndexer().List()
+	for _, obj := range nodeList {
+		node, ok := obj.(*corev1.Node)
+		if !ok {
+			runtime.HandleError(fmt.Errorf("expected Node but got %T", obj))
+			continue
+		}
+
+		// Skip nodes without pod CIDRs (not ready yet)
+		if len(node.Spec.PodCIDRs) == 0 {
+			continue
+		}
+
+		// O(1) map lookup instead of O(m) linear search
+		nodeIDs, exists := hostnameToNodeIDs[node.Name]
+		if !exists {
+			// Host doesn't exist in Netmaker - skip silently
+			continue
+		}
+
+		// Add all node IDs to the valid set
+		for _, nodeID := range nodeIDs {
+			validNodeIDs[nodeID] = true
+		}
+	}
+
+	// Call reconciler to clean up orphaned egress rules
+	return c.options.Reconciler.CleanupOrphanedEgresses(ctx, validNodeIDs)
+}
+
+// periodicCleanup is a wrapper for periodic cleanup execution
+func (c *Controller) periodicCleanup(ctx context.Context) {
+	if err := c.cleanupOrphanedEgresses(ctx); err != nil {
+		runtime.HandleError(fmt.Errorf("periodic cleanup failed: %w", err))
+	}
 }

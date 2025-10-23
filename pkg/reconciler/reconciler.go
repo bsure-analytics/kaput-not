@@ -283,6 +283,48 @@ func (r *Reconciler) deleteNodeFromNetwork(ctx context.Context, nodeID string, n
 	return nil
 }
 
+// CleanupOrphanedEgresses removes egress rules for Netmaker nodes that don't have corresponding K8s nodes
+// This handles drift detection - egress rules created manually or left behind when the controller was down
+// validNodeIDs is the set of all Netmaker node IDs that should have egress rules
+func (r *Reconciler) CleanupOrphanedEgresses(ctx context.Context, validNodeIDs map[string]bool) error {
+	// Get all nodes across all networks
+	allNodes, err := r.netmakerClient.ListNodes(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to list all nodes: %w", err)
+	}
+
+	// Group nodes by network for efficient cleanup
+	networkNodes := make(map[string][]string) // network -> []nodeID
+	for _, node := range allNodes {
+		networkNodes[node.Network] = append(networkNodes[node.Network], node.ID)
+	}
+
+	// Clean up each network
+	var cleanupErrors []error
+	for network, nodeIDs := range networkNodes {
+		// Find orphaned node IDs (nodes in Netmaker but not in K8s)
+		var orphanedNodeIDs []string
+		for _, nodeID := range nodeIDs {
+			if !validNodeIDs[nodeID] {
+				orphanedNodeIDs = append(orphanedNodeIDs, nodeID)
+			}
+		}
+
+		// Delete egress rules for orphaned nodes
+		for _, nodeID := range orphanedNodeIDs {
+			if err := r.deleteNodeFromNetwork(ctx, nodeID, network); err != nil {
+				cleanupErrors = append(cleanupErrors, fmt.Errorf("network %s, node %s: %w", network, nodeID, err))
+			}
+		}
+	}
+
+	if len(cleanupErrors) > 0 {
+		return fmt.Errorf("failed to cleanup some orphaned egress rules: %v", cleanupErrors)
+	}
+
+	return nil
+}
+
 // buildEgressDescription builds the index-based description
 // Format: "Managed by kaput-not (DO NOT EDIT): index=<i>"
 // Note: node_id is NOT included because it's already in the nodes map
