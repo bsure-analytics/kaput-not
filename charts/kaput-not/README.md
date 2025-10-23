@@ -27,7 +27,7 @@ helm install kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
 To install a specific version:
 
 ```bash
-helm install kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not --version 0.1.2 \
+helm install kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not --version 0.3.0 \
   --namespace kube-system \
   --create-namespace \
   --set netmaker.apiUrl="https://api.netmaker.example.com" \
@@ -182,7 +182,7 @@ helm upgrade kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
 To upgrade to a specific version:
 
 ```bash
-helm upgrade kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not --version 0.2.0 \
+helm upgrade kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not --version 0.3.0 \
   --namespace kube-system \
   -f my-values.yaml
 ```
