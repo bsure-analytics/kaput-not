@@ -1,28 +1,41 @@
+---
 # Default values for kaput-not
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-# Number of controller replicas (leader election enabled)
-replicaCount: 2
+# Affinity
+affinity: {}
+
+# Annotations to add to all resources
+annotations: {}
+
+# Kubernetes cluster name (optional)
+# Use this for multi-cluster deployments sharing a Netmaker network
+# If empty: single-cluster mode, manages all kaput-not egress rules
+# If set: multi-cluster mode, only manages egress rules with this cluster name
+clusterName: ""
+
+fullnameOverride: ""
 
 image:
-  repository: ghcr.io/bsure-analytics/kaput-not
   pullPolicy: IfNotPresent
+  repository: ghcr.io/bsure-analytics/kaput-not
   # Overrides the image tag whose default is the chart appVersion
   tag: ""
 
 imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
 
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
+# Labels to add to all resources
+labels: {}
+
+# Leader election configuration
+leaderElection:
+  # Note: enabled defaults to true in-cluster, false for local development
+  # Namespace is auto-detected from the pod's service account
+  enabled: true
+  id: kaput-not
+
+nameOverride: ""
 
 # Netmaker configuration
 netmaker:
@@ -32,21 +45,11 @@ netmaker:
   # Netmaker credentials (required)
   # You should override these values via --set flags or a separate values file
   # NEVER commit actual credentials to git
-  username: kaput-not
   password: REPLACE-WITH-ACTUAL-PASSWORD
+  username: kaput-not
 
-# Kubernetes cluster name (optional)
-# Use this for multi-cluster deployments sharing a Netmaker network
-# If empty: single-cluster mode, manages all kaput-not egress rules
-# If set: multi-cluster mode, only manages egress rules with this cluster name
-clusterName: ""
-
-# Leader election configuration
-leaderElection:
-  # Note: enabled defaults to true in-cluster, false for local development
-  # Namespace is auto-detected from the pod's service account
-  enabled: true
-  id: kaput-not
+# Node selector
+nodeSelector: {}
 
 # Pod security context
 podSecurityContext:
@@ -54,13 +57,10 @@ podSecurityContext:
   seccompProfile:
     type: RuntimeDefault
 
-# Container security context
-securityContext:
-  allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: true
-  capabilities:
-    drop:
-      - ALL
+priorityClassName: system-cluster-critical
+
+# Number of controller replicas (leader election enabled)
+replicaCount: 2
 
 # Resource limits and requests
 resources:
@@ -71,21 +71,29 @@ resources:
     cpu: 100m
     memory: 64Mi
 
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+serviceAccount:
+  # Annotations to add to the service account
+  annotations: {}
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
 # Rolling update strategy
 strategy:
-  type: RollingUpdate
   rollingUpdate:
-    maxUnavailable: 1
     maxSurge: 1
-
-# Topology spread constraints for HA
-topologySpreadConstraints:
-  - maxSkew: 1
-    topologyKey: kubernetes.io/hostname
-    whenUnsatisfiable: ScheduleAnyway
-
-# Node selector
-nodeSelector: {}
+    maxUnavailable: 1
+  type: RollingUpdate
 
 # Tolerations
 tolerations:
@@ -93,13 +101,8 @@ tolerations:
     key: node-role.kubernetes.io/control-plane
     operator: Exists
 
-# Affinity
-affinity: {}
-
-# Labels to add to all resources
-labels: {}
-
-# Annotations to add to all resources
-annotations: {}
-
-priorityClassName: system-cluster-critical
+# Topology spread constraints for HA
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway

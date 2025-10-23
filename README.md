@@ -215,6 +215,8 @@ Configuration is managed via Helm values. See `charts/kaput-not/values.yaml` for
 - `image.repository`: Docker image repository (default: `ghcr.io/bsure-analytics/kaput-not`)
 - `image.tag`: Docker image tag (default: chart appVersion)
 - `leaderElection.enabled`: Enable leader election (default: `true`)
+- `priorityClassName`: Priority class for pod scheduling (default: `system-cluster-critical`)
+- `tolerations`: Pod tolerations (default: tolerates control-plane nodes)
 - `resources.requests/limits`: CPU and memory resources
 
 ### Example: Custom Configuration
@@ -312,6 +314,15 @@ kaput-not supports high availability through Kubernetes lease-based leader elect
 - **Only one active** controller at a time
 - **Automatic failover** if leader fails
 - **No split-brain** due to lease-based locking
+- **Automatic rolling updates** on configuration changes via ConfigMap/Secret checksums
+
+### Configuration Updates
+
+The Helm chart automatically triggers rolling updates when configuration changes:
+
+- ConfigMap and Secret checksums are included in pod template annotations
+- Changing values like `clusterName`, `netmaker.apiUrl`, or `netmaker.password` triggers zero-downtime rolling updates
+- No need to manually restart pods after configuration changes
 
 Check which replica is the leader:
 

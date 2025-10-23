@@ -119,8 +119,13 @@ See `values.yaml` for all available configuration options.
 | `resources.limits.cpu` | CPU limit | `200m` |
 | `resources.limits.memory` | Memory limit | `128Mi` |
 | `priorityClassName` | Priority class for pod scheduling | `system-cluster-critical` |
+| `tolerations` | Pod tolerations for node selection | Tolerates control-plane nodes |
+| `nodeSelector` | Node labels for pod assignment | `{}` |
+| `affinity` | Pod affinity rules | `{}` |
 
 **Note:** The leader election namespace is auto-detected from the pod's service account and does not need to be configured.
+
+**Default Tolerations:** By default, kaput-not tolerates control-plane nodes (`node-role.kubernetes.io/control-plane:NoSchedule`), allowing it to run on single-node or small clusters where control-plane nodes also run workloads.
 
 ## Resource Scaling
 
@@ -163,6 +168,17 @@ helm upgrade kaput-not oci://ghcr.io/bsure-analytics/charts/kaput-not \
 The primary memory consumer is the Kubernetes informer cache (~25 KB per node). A 100-node cluster typically uses 50-100 MB total memory. The default limits (64Mi/128Mi) are appropriate for most small to medium clusters.
 
 ## Features
+
+### Automatic Rolling Updates
+
+The Helm chart includes automatic configuration change detection:
+
+- **ConfigMap and Secret checksums** are added to pod template annotations
+- When configuration changes (e.g., `clusterName`, `netmaker.apiUrl`, `netmaker.password`), Kubernetes automatically performs a rolling update
+- Zero-downtime configuration updates without manual pod restarts
+- Uses SHA-1 checksums for efficient change detection
+
+**How it works:** Each pod template includes `checksum/config` and `checksum/secret` annotations. When you run `helm upgrade` with changed values, the checksums change, triggering Kubernetes to roll out new pods.
 
 ### TTL-Based Caching
 

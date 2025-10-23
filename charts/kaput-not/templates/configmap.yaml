@@ -1,14 +1,11 @@
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  labels: {{- include "kaput-not.labels" . | nindent 4 }}
   name: {{ include "kaput-not.fullname" . }}
   namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "kaput-not.labels" . | nindent 4 }}
 data:
-  # Netmaker API endpoint (non-sensitive)
-  NETMAKER_API_URL: {{ .Values.netmaker.apiUrl | quote }}
-
   # Kubernetes cluster name (optional, for multi-cluster deployments)
   # If empty: single-cluster mode, manages all kaput-not egress rules
   # If set: multi-cluster mode, only manages egress rules with this cluster name
@@ -22,3 +19,6 @@ data:
   # Local development defaults to disabled.
   LEADER_ELECTION_ENABLED: {{ .Values.leaderElection.enabled | quote }}
   LEADER_ELECTION_ID: {{ .Values.leaderElection.id | quote }}
+
+  # Netmaker API endpoint (non-sensitive)
+  NETMAKER_API_URL: {{ .Values.netmaker.apiUrl | quote }}
