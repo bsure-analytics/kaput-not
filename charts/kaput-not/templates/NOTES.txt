@@ -18,7 +18,6 @@ Or use a separate values file (recommended):
 {{ end }}
 Configuration:
   Netmaker API URL: {{ .Values.netmaker.apiUrl }}
-  Networks: Auto-discovered from Netmaker API
   Replicas: {{ .Values.replicaCount }}
   Leader Election: {{ .Values.leaderElection.enabled }}
 
