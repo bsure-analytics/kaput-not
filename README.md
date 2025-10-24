@@ -299,12 +299,13 @@ This reduces load on the Netmaker API while maintaining near real-time consisten
 
 ### Multi-Network Support
 
-kaput-not supports managing a Kubernetes node across multiple Netmaker networks simultaneously:
+kaput-not automatically discovers and manages Netmaker networks for each Kubernetes node:
 
-- Specify multiple networks via comma or space separation: `"network1,network2"` or `"network1 network2"`
-- Each network gets independent egress rules with index-based management
-- Useful for complex topologies where nodes participate in multiple mesh networks
-- Cache is network-aware to prevent cross-network data leakage
+- **Auto-discovery**: Networks are automatically detected from the Netmaker API based on which networks each host participates in
+- **Multi-network capability**: A single Kubernetes node can participate in multiple Netmaker networks simultaneously
+- **Independent egress rules**: Each network gets separate egress rules with index-based management
+- **Network-aware caching**: Cache is network-scoped to prevent cross-network data leakage
+- **No manual configuration**: No need to specify network names - everything is discovered automatically
 
 ## High Availability
 
