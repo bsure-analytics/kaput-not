@@ -3,11 +3,11 @@ appVersion: v0.3.3-SNAPSHOT
 description: A CNI-agnostic Kubernetes controller for managing Netmaker Egress rules
 home: https://github.com/bsure-analytics/kaput-not
 keywords:
-  - netmaker
-  - wireguard
-  - networking
   - cni
   - kubernetes
+  - netmaker
+  - networking
+  - wireguard
 maintainers:
   - name: bsure-analytics
 name: kaput-not
